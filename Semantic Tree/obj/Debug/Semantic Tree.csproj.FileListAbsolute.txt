@@ -1,0 +1,7 @@
+C:\Users\L440\source\repos\Semantic Tree\Semantic Tree\bin\Debug\Semantic Tree.exe.config
+C:\Users\L440\source\repos\Semantic Tree\Semantic Tree\bin\Debug\Semantic Tree.exe
+C:\Users\L440\source\repos\Semantic Tree\Semantic Tree\bin\Debug\Semantic Tree.pdb
+C:\Users\L440\source\repos\Semantic Tree\Semantic Tree\obj\Debug\Semantic Tree.csprojResolveAssemblyReference.cache
+C:\Users\L440\source\repos\Semantic Tree\Semantic Tree\obj\Debug\Semantic Tree.csproj.CoreCompileInputs.cache
+C:\Users\L440\source\repos\Semantic Tree\Semantic Tree\obj\Debug\Semantic Tree.exe
+C:\Users\L440\source\repos\Semantic Tree\Semantic Tree\obj\Debug\Semantic Tree.pdb
