@@ -14,7 +14,7 @@ namespace Semantic_Tree
         static string[] validOrder =
         {
             @"\![A-Za-z\(]", //empieza con negacion
-            @"\([A-Za-z\(]", //abrir parentesis
+            @"\([A-Za-z\(!]", //abrir parentesis
             @"[A-Za-z][\)\>\&\|]", //letra
             @"\)[\)\>\&\|]", //cerrar partentesis
             @"[\>\&\|][A-Za-z\(\!]" //operacion
@@ -22,13 +22,19 @@ namespace Semantic_Tree
         static void Main(string[] args)
         {
             Console.WriteLine("ingrese expresión: ");
-            string expresion = "!(((p>q)>(!p|q))&((!p|q)>(p>q)))";// Console.ReadLine();
+            string expresion = "(!(((p>q)>(!p|q))&((!p|q)>(p>q))) & (((p>q)>(!p|q))&((!p|q)>(p>q))))";// Console.ReadLine();
             expresion = expresion.Trim().Replace(" ", "");
             List<Expression> expTmp = parseExpression(expresion);
             Expression t = getRootExpression(expTmp);
             List<CatExpression> cat = null;
             generateTable(t, null, ref cat);
             removeEquals(ref cat);
+            int count = -1;
+            while (cat.Count != count)
+            {
+                count = cat.Count;
+                removeEquals(ref cat);
+            }
             //IEnumerable<CatExpression> cat1 = cat.Distinct();
             Console.ReadLine();
         }
@@ -41,12 +47,12 @@ namespace Semantic_Tree
                 foreach (CatExpression cE in cat)
                 {
                     CatExpression tmp = t.Find(c =>
-                    c.max != null ? (
+                    (c.max != null && cE.max!=null ? (
                     c.max.id == cE.max.id &&
-                    c.max.isPositive == cE.max.isPositive) : false &&
-                    c.min != null ? (
+                    c.max.isPositive == cE.max.isPositive) : false) &&
+                    (c.min != null && cE.min!=null ? (
                     c.min.id == cE.min.id &&
-                    c.min.isPositive == cE.min.isPositive) : false
+                    c.min.isPositive == cE.min.isPositive) : false)
                     );
                     /*if (tmp != null && tmp != cE)
                     {
@@ -55,51 +61,52 @@ namespace Semantic_Tree
                     }*/
                     if(tmp==null)
                         t.Add(cE);
-                    else
+                    else if (tmp!=cE)
                     {
                         List<CatExpression> toEval = new List<CatExpression>();
                         toEval.AddRange(cat);
                         List<CatExpression> evaluated = new List<CatExpression>();
-                        int count = 0;
                         while (toEval.Count > 0)
                         {
-                            Console.WriteLine(count++);
                             CatExpression current = toEval[0];
                             toEval.Remove(current);
                             evaluated.Add(current);
-                            if(current.max!=null?(current.max.id == tmp.id):false)
+                            if(current.max!=null)
                             {
-                                if(evaluated.Find(c =>
-                                    c.max != null ? (
+                                if(evaluated.Find(c => c==current || (
+                                    (c.max != null && current.max!=null ? (
                                     c.max.id == current.max.id &&
-                                    c.max.isPositive == current.max.isPositive) : false &&
-                                    c.min != null ? (
+                                    c.max.isPositive == current.max.isPositive) : false) &&
+                                    (c.min != null && current.min!=null ? (
                                     c.min.id == current.min.id &&
-                                    c.min.isPositive == current.min.isPositive) : false
-                                    )==null
+                                    c.min.isPositive == current.min.isPositive) : false)
+                                    ))==null
                                 )
                                     toEval.Add(current.max);
-                                current.max = tmp;
+                                if(current.max.id == cE.id)
+                                    current.max = tmp;
                             }
-                            if (current.min!=null?(current.min.id == tmp.id):false)
+                            if (current.min!=null)
                             {
-                                if (evaluated.Find(c =>
-                                     c.max != null ? (
+                                if (evaluated.Find(c => c == current || (
+                                     (c.max != null && current.max!=null ? (
                                      c.max.id == current.max.id &&
-                                     c.max.isPositive == current.max.isPositive) : false &&
-                                     c.min != null ? (
+                                     c.max.isPositive == current.max.isPositive) : false) &&
+                                     (c.min != null && current.min!=null ? (
                                      c.min.id == current.min.id &&
-                                     c.min.isPositive == current.min.isPositive) : false
-                                    ) == null
+                                     c.min.isPositive == current.min.isPositive) : false)
+                                    )) == null
                                 )
                                     toEval.Add(current.min);
-                                current.min = tmp;
+                                if (current.min.id == cE.id)
+                                    current.min = tmp;
                             }
                         }
                     }
                 }
             }
             cat = t;
+            
         }
 
         static void generateTable(Expression root, CatExpression current, ref List<CatExpression> cat)
@@ -251,14 +258,8 @@ namespace Semantic_Tree
             
         }
 
-        //public static bool isInsatisfacibleForce(Expression root)
-        //{
-
-        //}
-
         static List<Expression> parseExpression(string expresion)
         {
-            int parentesis = -1;
 
             List<Expression> expTmp = new List<Expression>();
             List<Expression> expHierarchi = new List<Expression>();
@@ -310,19 +311,17 @@ namespace Semantic_Tree
                         expHierarchi[expHierarchi.Count - 2].e2 = expTmp[tmpId];
                     }
                     isFirst = true;
-                    parentesis++;
                 }
                 else if (expresion[i].ToString().Equals(")"))
                 {
                     expHierarchi.Remove(expHierarchi.Last());
                     isFirst = true;
-                    parentesis--;
                 }
                 else if (Regex.IsMatch(expresion[i].ToString(), oper))
                 {
                     isFirst = false;
                     tmpId = expTmp.Count - 1;
-                    if (parentesis < 0 && expHierarchi.Count == 0)
+                    if (expHierarchi.Count == 0)
                     {
                         expTmp.Add(new Expression() { id = expTmp.Count, isPositive = true });
                         List<Expression> tmp = new List<Expression>();
