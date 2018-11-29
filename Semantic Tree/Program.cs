@@ -22,7 +22,9 @@ namespace Semantic_Tree
         static void Main(string[] args)
         {
             Console.WriteLine("ingrese expresión: ");
-            string expresion = "(!(((p>q)>(!p|q))&((!p|q)>(p>q))) & (((p>q)>(!p|q))&((!p|q)>(p>q))))";// Console.ReadLine();
+            string expresion = //"!(((p>q)>(!p|q))&((!p|q)>(p>q)))"; 
+            "(!(((p>q)>(!p|q))&((!p|q)>(p>q))) & (((p>q)>(!p|q))&((!p|q)>(p>q))))";
+            // Console.ReadLine();
             expresion = expresion.Trim().Replace(" ", "");
             List<Expression> expTmp = parseExpression(expresion);
             Expression t = getRootExpression(expTmp);
@@ -35,8 +37,23 @@ namespace Semantic_Tree
                 count = cat.Count;
                 removeEquals(ref cat);
             }
+            printCatalog(cat);
             //IEnumerable<CatExpression> cat1 = cat.Distinct();
             Console.ReadLine();
+        }
+
+        static void setSigns(CatExpression rootCat, Expression rootExp, ref CatExpression r)
+        {
+            //if (r == null)
+        }
+
+        static void printCatalog(List<CatExpression> cat)
+        {
+            Console.WriteLine("ID\tMax\tMin\tAtom");
+            foreach (CatExpression c in cat)
+            {
+                Console.WriteLine(c.id + "\t" + (c.max.isPositive ? "" : "!") + c.max.id + "\t" + (c.min == null ? "0" : (c.min.isPositive ? "" : "!") + c.min.id) + "\t" + (c.atom != null ? c.atom.name : "-"));
+            }
         }
 
         static void removeEquals(ref List<CatExpression> cat)
@@ -47,10 +64,10 @@ namespace Semantic_Tree
                 foreach (CatExpression cE in cat)
                 {
                     CatExpression tmp = t.Find(c =>
-                    (c.max != null && cE.max!=null ? (
+                    ((c.max != null && cE.max != null) ? (
                     c.max.id == cE.max.id &&
                     c.max.isPositive == cE.max.isPositive) : false) &&
-                    (c.min != null && cE.min!=null ? (
+                    ((c.min != null && cE.min != null) ? (
                     c.min.id == cE.min.id &&
                     c.min.isPositive == cE.min.isPositive) : false)
                     );
@@ -59,9 +76,9 @@ namespace Semantic_Tree
                         tmp.parentTmp = cE.parentTmp;
                         cE = tmp;
                     }*/
-                    if(tmp==null)
+                    if (tmp == null)
                         t.Add(cE);
-                    else if (tmp!=cE)
+                    else if (tmp != cE)
                     {
                         List<CatExpression> toEval = new List<CatExpression>();
                         toEval.AddRange(cat);
@@ -71,28 +88,28 @@ namespace Semantic_Tree
                             CatExpression current = toEval[0];
                             toEval.Remove(current);
                             evaluated.Add(current);
-                            if(current.max!=null)
-                            {
-                                if(evaluated.Find(c => c==current || (
-                                    (c.max != null && current.max!=null ? (
-                                    c.max.id == current.max.id &&
-                                    c.max.isPositive == current.max.isPositive) : false) &&
-                                    (c.min != null && current.min!=null ? (
-                                    c.min.id == current.min.id &&
-                                    c.min.isPositive == current.min.isPositive) : false)
-                                    ))==null
-                                )
-                                    toEval.Add(current.max);
-                                if(current.max.id == cE.id)
-                                    current.max = tmp;
-                            }
-                            if (current.min!=null)
+                            if (current.max != null)
                             {
                                 if (evaluated.Find(c => c == current || (
-                                     (c.max != null && current.max!=null ? (
+                                     ((c.max != null && current.max != null) ? (
                                      c.max.id == current.max.id &&
                                      c.max.isPositive == current.max.isPositive) : false) &&
-                                     (c.min != null && current.min!=null ? (
+                                     ((c.min != null && current.min != null) ? (
+                                     c.min.id == current.min.id &&
+                                     c.min.isPositive == current.min.isPositive) : false)
+                                     )) == null
+                                )
+                                    toEval.Add(current.max);
+                                if (current.max.id == cE.id)
+                                    current.max = tmp;
+                            }
+                            if (current.min != null)
+                            {
+                                if (evaluated.Find(c => c == current || (
+                                     ((c.max != null && current.max != null) ? (
+                                     c.max.id == current.max.id &&
+                                     c.max.isPositive == current.max.isPositive) : false) &&
+                                     ((c.min != null && current.min != null) ? (
                                      c.min.id == current.min.id &&
                                      c.min.isPositive == current.min.isPositive) : false)
                                     )) == null
@@ -101,12 +118,24 @@ namespace Semantic_Tree
                                 if (current.min.id == cE.id)
                                     current.min = tmp;
                             }
+
                         }
                     }
                 }
             }
             cat = t;
-            
+        }
+
+        static void findAndReplace(ref Expression root, CatExpression target)
+        {
+            if (root == null)
+                return;
+            if(((root.tblExp.max!=null && target.max != null) ? root.tblExp.max.id==target.max.id && root.tblExp.max.isPositive == target.max.isPositive:false)&&
+                ((root.tblExp.min != null && target.min != null) ? root.tblExp.min.id == target.min.id && root.tblExp.min.isPositive == target.min.isPositive : false))
+            {
+                root.tblExp = target;
+            }
+            //findAndReplace(ref root.e1, target);
         }
 
         static void generateTable(Expression root, CatExpression current, ref List<CatExpression> cat)
@@ -237,6 +266,8 @@ namespace Semantic_Tree
                     cat[actualId].max = cat[actualId].min;
                     cat[actualId].min = t;
                 }
+
+                root.tblExp = cat[actualId];
 
                 /*
                 CatExpression cE = cat[actualId];
@@ -437,6 +468,7 @@ namespace Semantic_Tree
         public Atom a2 { get; set; } = null;
         public Expression e1 { get; set; } = null;
         public Expression e2 { get; set; } = null;
+        public CatExpression tblExp { get; set; } = null;
 
         public bool isClosed()
         {
