@@ -35,9 +35,21 @@ namespace Semantic_Tree
             Console.ReadLine();
         }
 
-        static void setSigns(CatExpression rootCat, Expression rootExp, ref CatExpression r)
+        static void setSigns(Expression rootExp, ref Expression newExp)
         {
-            //if (r == null)
+            if (newExp == null)
+            {
+                newExp = rootExp;
+            }
+            switch (newExp.operation)
+            {
+                case 1:
+                    break;
+                case 2:
+                    break;
+                case 3:
+                    break;
+            }
         }
 
         static void printCatalog(List<CatExpression> cat)
